@@ -2,7 +2,6 @@ import telebot
 import requests
 import json
 from keep_alive import keep_alive
-
 keep_alive()
 
 # Replace YOUR_BOT_TOKEN with your actual Telegram bot token
