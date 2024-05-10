@@ -1,88 +1,93 @@
-from flask import Flask, request, jsonify
+import telebot
 import requests
+import json
+from keep_alive import keep_alive
 
-app = Flask(__name__)
+keep_alive()
 
-@app.route('/token/lista', methods=['GET'])
-def generate_token_with_cvc():
-    cc_info = request.args.get('cc')
-    pk = request.args.get('pk')
+# Replace YOUR_BOT_TOKEN with your actual Telegram bot token
+bot = telebot.TeleBot("6851295272:AAET7J74JleV3zrMWhP-5IOjsfi_IuNgkSI")
 
-    if cc_info and pk:
-        card_data = cc_info.split("|")
+# Global variables to store client secret and publishable key
+client_secret = None
+publishable_key = None
 
-        payload = {
-            "card[number]": card_data[0],
-            "card[exp_month]": card_data[1],
-            "card[exp_year]": card_data[2],
-            "card[cvc]": card_data[3],
-            "payment_user_agent": "stripe.js/35cbb2677a; stripe-js-v3/35cbb2677a; card-element",
-            "key": pk,
-            "pasted_fields": "number"
-        }
+# Function to handle /start command
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.reply_to(message, "welcome to the Patched Project!\n\nTo set the client secret, use the command: /cs <client_secret>\nTo set the publishable key, use the command: /pk <pk>\nTo process card payments, use the command: /pay <card_details>")
 
-        headers = {
-            'User-Agent': "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Mobile Safari/537.36",
-            'Accept': "application/json",
-            'Content-Type': "application/x-www-form-urlencoded",
-            'sec-ch-ua': "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"",
-            'dnt': "1",
-            'sec-ch-ua-mobile': "?1",
-            'sec-ch-ua-platform': "\"Android\"",
-            'origin': "https://js.stripe.com",
-            'sec-fetch-site': "same-site",
-            'sec-fetch-mode': "cors",
-            'sec-fetch-dest': "empty",
-            'referer': "https://js.stripe.com/"
-        }
+# Function to handle /cs command
+@bot.message_handler(commands=['cs'])
+def set_client_secret(message):
+    global client_secret
+    client_secret = message.text.split()[1]
+    bot.reply_to(message, f"Client secret set to: {client_secret}")
 
-        response = requests.post("https://api.stripe.com/v1/tokens", data=payload, headers=headers)
-        token = response.json().get("id", "")
+# Function to handle /pk command
+@bot.message_handler(commands=['pk'])
+def set_publishable_key(message):
+    global publishable_key
+    publishable_key = message.text.split()[1]
+    bot.reply_to(message, f"Publishable key set to: {publishable_key}")
 
-        return jsonify({"token": token}), 200
-    else:
-        return jsonify({"error": "Missing 'cc' or 'pk' parameter"}), 400
+# Function to handle /pay command
+@bot.message_handler(commands=['pay'])
+def process_payments(message):
+    global client_secret, publishable_key
 
-@app.route('/tokens/lista', methods=['GET'])
-def generate_token_ignore_cvc():
-    cc_info = request.args.get('cc')
-    pk = request.args.get('pk')
+    # Check if client secret and publishable key are set
+    if not client_secret or not publishable_key:
+        bot.reply_to(message, "Please set the client secret and publishable key first using the /cs and /pk commands.")
+        return
 
-    if cc_info and pk:
-        # Extracting card information excluding CVC
-        cc_data = cc_info.split("|")
+    # Extract card details from the message
+    card_details = message.text.split()[1:]
 
-        payload = {
-            "card[number]": cc_data[0],
-            "card[exp_month]": cc_data[1],
-            "card[exp_year]": cc_data[2],
-            "payment_user_agent": "stripe.js/35cbb2677a; stripe-js-v3/35cbb2677a; card-element",
-            "key": pk,
-            "pasted_fields": "number"
-        }
+    # Prepare the base API endpoint URL
+    API_BASE_URL = "https://gaystripe.replit.app/stripeinbuilt"
 
-        headers = {
-            'User-Agent': "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Mobile Safari/537.36",
-            'Accept': "application/json",
-            'Content-Type': "application/x-www-form-urlencoded",
-            'sec-ch-ua': "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"",
-            'dnt': "1",
-            'sec-ch-ua-mobile': "?1",
-            'sec-ch-ua-platform': "\"Android\"",
-            'origin': "https://js.stripe.com",
-            'sec-fetch-site': "same-site",
-            'sec-fetch-mode': "cors",
-            'sec-fetch-dest': "empty",
-            'referer': "https://js.stripe.com/"
-        }
+    # Process each card detail
+    for card in card_details:
+        card_info = card.split("|")
+        if len(card_info) != 4:
+            bot.reply_to(message, f"Invalid card details format for '{card}'. Skipping this card.")
+            continue
 
-        response = requests.post("https://api.stripe.com/v1/tokens", data=payload, headers=headers)
-        token = response.json().get("id", "")
+        card_number, expiry_month, expiry_year, cvv = card_info
 
-        return jsonify({"token": token}), 200
-    else:
-        return jsonify({"error": "Missing 'cc' or 'pk' parameter"}), 400
+        # Prepare the API request URL
+        API_URL = f"{API_BASE_URL}?cc={card_number}|{expiry_month}|{expiry_year}|{cvv}&client_secret={client_secret}&pk={publishable_key}"
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
-    
+        # Make the GET request to the API
+        response = requests.get(API_URL)
+
+        # Parse the JSON response
+        try:
+            response_data = json.loads(response.text)
+        except json.JSONDecodeError:
+            bot.reply_to(message, f"Card: {card}\n\nInvalid response from the API:\n\n{response.text}")
+            continue
+
+        # Extract relevant information from the response
+        if "error" in response_data:
+            error_data = response_data["error"]
+            error_message = error_data.get("message", "Unknown error")
+            error_code = error_data.get("code", "")
+            error_decline_code = error_data.get("decline_code", "")
+            error_doc_url = error_data.get("doc_url", "")
+            payment_intent_id = error_data.get("payment_intent", {}).get("id", "")
+
+            reply_message = f"Card: {card}\n\nError: {error_message}\nError Code: {error_code}\nDecline Code: {error_decline_code}\nPayment Intent ID: {payment_intent_id}\nDocumentation URL: {error_doc_url}"
+        else:
+            payment_intent_id = response_data.get("payment_intent", {}).get("id", "")
+            amount = response_data.get("payment_intent", {}).get("amount", 0)
+            currency = response_data.get("payment_intent", {}).get("currency", "")
+            description = response_data.get("payment_intent", {}).get("description", "")
+
+            reply_message = f"Card: {card}\n\nPayment Successful!\nPayment Intent ID: {payment_intent_id}\nAmount: {amount / 100} {currency}\nDescription: {description}"
+
+        bot.reply_to(message, reply_message)
+
+# Start the bot
+bot.polling()
