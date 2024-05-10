@@ -1,11 +1,15 @@
-import flask
 from flask import Flask
+from threading import Thread
 
-app = Flask(__name__)
+app = Flask('')
 
 @app.route('/')
-def index():
-    return "Server is alive!"
+def home():
+    return "I'm alive!"
 
-if __name__ == '__main__':
-    app.run(debug=True)
+def run():
+    app.run(host="0.0.0.0", port=8080)
+
+def keep_alive():
+    server = Thread(target=run)
+    server.start()
