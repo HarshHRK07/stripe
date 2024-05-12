@@ -44,7 +44,7 @@ def process_payments(message):
     card_details = message.text.split()[1:]
 
     # Prepare the base API endpoint URL
-    API_BASE_URL = "https://gaystripe.replit.app/stripeinbuilt"
+    API_BASE_URL = "https://stripeauto.onrender.com/cvv"
 
     # Process each card detail
     for card in card_details:
