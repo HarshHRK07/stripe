@@ -41,7 +41,7 @@ def process_request():
     api_key = request.args.get('API')
     cc_info = request.args.get('CC')
     
-    if api_key != "SK_LIVE_NHI_HAI_SIR":
+    if api_key != "sk_live_hq":
         return jsonify({"error": "Invalid API key"}), 403
     
     if not cc_info:
