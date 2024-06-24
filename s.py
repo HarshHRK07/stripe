@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 API_URL = "https://api.theaccessbox.com/api/v1/UserAccount/createCharge"
 ZIP_CODE = "10001"  # Constant zip code
-BEARER_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS50aGVhY2Nlc3Nib3guY29tL2FwaS92MS9sb2dpbiIsImlhdCI6MTcxOTA2MzU4OCwibmJmIjoxNzE5MDYzNTg4LCJqdGkiOiJZdU5SWFRNSGdKUEFNWkJvIiwic3ViIjoiNzIiLCJwcnYiOiIyM2JkNWM4OTQ5ZjYwMGFkYjM5ZTcwMWM0MDA4NzJkYjdhNTk3NmY3In0.f1Pt5o5TJcCOZykoIpC1uIxXagmbSWcZz96UEPhNEJ4"
+BEARER_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2FwaS50aGVhY2Nlc3Nib3guY29tL2FwaS92MS9sb2dpbiIsImlhdCI6MTcxOTE5ODE1MiwibmJmIjoxNzE5MTk4MTUyLCJqdGkiOiJsWGxJSElUblpEWDFhRFdRIiwic3ViIjoiNzQiLCJwcnYiOiIyM2JkNWM4OTQ5ZjYwMGFkYjM5ZTcwMWM0MDA4NzJkYjdhNTk3NmY3In0.QonYVrZesD_bB4uyvfMmO1dGPzYCdo6u6j8kb6hqCGo"
 
 headers = {
   'User-Agent': "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
